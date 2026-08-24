@@ -1,0 +1,7 @@
+Đổi `qlnsd` thành mã phân hệ thật của bạn, VIẾT THƯỜNG.
+
+Thư mục viết thường, mã trong tên file viết HOA:
+  functions/qlsp/FUNC-QLSP-047.md
+
+Mỗi phân hệ một thư mục, mỗi thư mục tự đủ (có assets/ và diagrams/ riêng)
+— nén một thư mục gửi đi là người nhận render được ngay.

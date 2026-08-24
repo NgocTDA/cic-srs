@@ -988,6 +988,12 @@ def validate(path: Path, outline: dict, regdir: Path | None) -> Report:
     if not S.known_kind(outline, pname):
         return r
 
+    if doc.source and pname == S.GROUP:
+        lines = doc.source.read_text(encoding="utf-8").split("\n")
+        h1_count = sum(1 for line in lines if line.strip().startswith("# "))
+        if h1_count != 1:
+            r.err("cấu trúc", f"Tài liệu nhóm phải có đúng 1 Heading 1 (tên nhóm), hiện có {h1_count}.")
+
     prof = S.profile_of(outline, pname)
     check_structure(doc, prof, r)
     check_content(doc, prof, outline, r)

@@ -1,0 +1,23 @@
+# Bản sinh ra từ tools/build_skills.py — không commit, build lại lúc nào cũng được
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Bí mật — token Confluence
+.env
+.env.*
+!.env.example
+
+# Sản phẩm render thử
+*.docx.tmp
+out/
+~$*.docx
+
+# Hệ điều hành
+Thumbs.db
+.DS_Store

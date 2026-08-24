@@ -1,0 +1,3 @@
+.docx và .pdf xuất ra để ở đây. Sinh lại được từ .md bất cứ lúc nào.
+
+Đừng để lẫn trong functions/ — nhìn vào không biết tệp nào là nguồn.

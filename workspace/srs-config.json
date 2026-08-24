@@ -1,0 +1,16 @@
+{
+  "_doc": "Cấu hình cấp DỰ ÁN. Chỉ dùng khi render --standalone; ở chế độ merge thì bìa, logo, header/footer do tài liệu tổng quyết định. Thay 'Công ty MẪU' và 'Hệ thống MẪU' bằng tên thật của bạn.",
+  "to_chuc": "TRUNG TÂM THÔNG TIN TÍN DỤNG QUỐC GIA VIỆT NAM",
+  "du_an": "XÂY DỰNG HỆ THỐNG NGHIỆP VỤ LÕI CIC",
+  "tai_lieu": "Đặc tả yêu cầu phần mềm",
+  "ma_tai_lieu": "SRS-CIC-CORE",
+  "bao_mat": "Lưu hành nội bộ",
+  "plantuml_server": null,
+  "plantuml_jar": null,
+  "_plantuml_note": "Ba đường, theo thứ tự: (1) plantuml_server nếu khai — nhanh, không cần Java, nhưng mất tính tái lập và chỉ gọi được từ Claude Code; (2) plantuml_jar hoặc file `plantuml.jar` đặt ở gốc dự án — dùng khi mạng chặn github.com; (3) tự tải về ~/.cache/srs-help/, ghim phiên bản trong outline.json. Cả (2) và (3) đều CẦN JAVA trên máy — không có Java thì tải jar cũng vô ích. Windows: `winget install Microsoft.OpenJDK.17`.",
+  "logo": null,
+  "logo_rong_inch": 1.8,
+  "chan_trang": "Xây dựng hệ thống nghiệp vụ lõi CIC — Đặc tả yêu cầu phần mềm",
+  "so_trang": true,
+  "_logo_spec": "PNG nền trong suốt, rộng ≥ 600px, cắt sát không chừa khoảng trắng, sRGB, dưới 1MB. Không dùng SVG — python-docx không nhúng được. Script đọc kích thước thật và chỉ đặt chiều rộng nên tỉ lệ luôn giữ nguyên."
+}

@@ -1,0 +1,3 @@
+Ảnh mockup của phân hệ này để ở đây, ngay cạnh file .md — không phải ở gốc dự án.
+
+Tên theo mã tính năng: FEAT-QLNSD-001-01_danh-sach.png

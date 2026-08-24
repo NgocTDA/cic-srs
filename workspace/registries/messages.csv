@@ -1,0 +1,25 @@
+ma,loai,doi_tuong,chu_de,noi_dung,thamso,dieu_kien_phat_sinh,ghi_chu
+SUC-001,SUC,COMMON,,{Action} thành công.,Action,"Người dùng thực hiện hoàn tất các thao tác cơ bản (Thêm, Sửa, Xóa, Lưu, Duyệt, Kích hoạt...).",Toast - Tự tắt sau 3s - 5s.
+SUC-002,SUC,COMMON,,{Action} {Object} thành công.,"Action, Object",Thao tác thành công nhưng cần nhấn mạnh cụ thể đối tượng được tác động.,Toast - Tự tắt sau 3s - 5s.
+SUC-003,SUC,COMMON,,{Action} thành công. Vui lòng {Next_Action}.,"Action, Next_Action",Hoàn tất một bước chuyển đổi trạng thái quan trọng yêu cầu thao tác tiếp theo.,"Popup / Toast - Nếu dùng Popup cần có nút ""OK"" hoặc nút điều hướng."
+ERR-001,ERR,COMMON,,{Field} không được để trống.,Field,"Người dùng submit form nhưng bỏ trống trường bắt buộc, hoặc focus out khỏi trường bắt buộc.","Inline - Text màu đỏ, hiển thị ngay dưới trường nhập liệu."
+ERR-002,ERR,COMMON,,{Field} không hợp lệ hoặc sai định dạng.,Field,"Người dùng nhập sai chuẩn (email, số điện thoại, ngày tháng, mã số...).",Inline - Text màu đỏ dưới trường nhập liệu.
+ERR-003,ERR,COMMON,,{Field_1} phải {Condition} {Field_2}.,"Field_1, Condition, Field_2",Các validate logic nghiệp vụ phải so sánh giữa 2 trường dữ liệu với nhau.,Inline
+ERR-004,ERR,COMMON,,{Field} phải từ {Min} đến {Max} {Unit}.,"Field, Min, Max, Unit",Validate chặn giới hạn độ dài ký tự hoặc giá trị khoảng số.,Inline
+ERR-005,ERR,COMMON,,{Object} {Value} đã tồn tại. Vui lòng kiểm tra lại.,"Object, Value",Thêm mới hoặc cập nhật thông tin bị trùng bộ Key đã có trong CSDL.,Popup / Inline - Dùng Inline nếu lỗi ở 1 trường nhập. Dùng Popup nếu up file.
+ERR-006,ERR,COMMON,,{Object} không tồn tại hoặc không còn hiệu lực.,Object,"Lỗi 404 Not Found, không tìm thấy dữ liệu trên hệ thống khi truy vấn.",Popup / Toast - Tùy thuộc màn hình tra cứu hay popup.
+ERR-007,ERR,COMMON,,Tên đăng nhập hoặc mật khẩu không chính xác.,,Người dùng nhập sai tài khoản hoặc mật khẩu ở màn hình Đăng nhập.,Inline - Bảo mật: Tuyệt đối không báo rõ là sai tên đăng nhập hay sai mật khẩu.
+ERR-008,ERR,COMMON,,File tải lên vượt quá {Max_Size} hoặc sai định dạng {Format}.,"Max_Size, Format",File upload không thỏa mãn ràng buộc cứng của hệ thống.,Inline
+ERR-009,ERR,COMMON,,"File sai cấu trúc, thiếu dữ liệu hoặc bị rỗng. Vui lòng kiểm tra lại.",,"Upload file sai template, sai số lượng cột, hoặc file rỗng không có data.",Inline - Có thể bổ sung link tải lại file mẫu.
+ERR-010,ERR,COMMON,,Đã có lỗi xảy ra (Mã lỗi: {Error_Code}). Vui lòng thử lại.,Error_Code,"Các lỗi hệ thống, đứt kết nối mạng, timeout, hoặc lỗi code chưa lường trước.",Toast
+WAR-001,WAR,COMMON,,Không thể {Action}. {Object} đang được sử dụng hoặc có dữ liệu phát sinh.,"Action, Object",Hành động xóa/hủy bị chặn do đối tượng đang bị tham chiếu (Foreign Key).,"Popup - Có nút Đóng, tự tắt sau 10s."
+WAR-002,WAR,COMMON,,Không thể {Action}. Bản ghi đang ở trạng thái {State}.,"Action, State",Chặn thao tác do không thỏa mãn luồng quy trình (Workflow/Status).,"Popup - Có nút Đóng, tự tắt sau 10s."
+WAR-003,WAR,COMMON,,Dữ liệu đã bị thay đổi bởi người khác. Vui lòng làm mới trang.,,Xử lý xung đột khi 2 người dùng đồng thời thao tác trên cùng 1 bản ghi.,Toast - Tự động thoát popup hiện tại và reload trang sau khi tắt.
+WAR-004,WAR,COMMON,,Tài khoản bị {Action} do {Reason}.,"Action, Reason","Tài khoản bị vô hiệu hóa, tạm khóa vì chính sách hệ thống.",Popup - Có nút Đóng.
+WAR-005,WAR,COMMON,,Số lượng {Object} đã đạt giới hạn {Max_Limit}.,"Object, Max_Limit","Chặn thao tác khi vượt quá dung lượng, hạn ngạch (quota) được cấp.",Popup - Có nút Đóng.
+WAR-006,WAR,COMMON,,{Object} đã hết hạn. Vui lòng {Action}.,"Object, Action",Hết phiên làm việc (Session timeout) hoặc hết hạn mã OTP.,Popup / Inline - Nút điều hướng (VD: OK để về trang Login).
+CONF-001,CONF,COMMON,,Bạn có chắc chắn muốn {Action} {Object} không?,"Action, Object",Cần xác nhận hành động có tính thay đổi nhưng không làm mất dữ liệu.,Popup - 2 Nút: Đồng ý / Hủy (hoặc Có / Không).
+CONF-002,CONF,COMMON,,Bạn có chắc chắn muốn {Action} {Object} không? Dữ liệu sau khi {Action} sẽ không thể phục hồi.,"Action, Object, Action",Cảnh báo trước khi thực hiện hành động rủi ro cao (Xóa cứng).,Popup - 2 Nút: Tiếp tục / Hủy.
+CONF-003,CONF,COMMON,,Dữ liệu {Object} đã tồn tại. Bạn có muốn ghi đè không?,Object,"Cảnh báo ghi đè dữ liệu khi chạy Import file, Đồng bộ hoặc Sao chép.",Popup - 2 Nút: Xác nhận / Hủy.
+INF-001,INF,COMMON,,Hệ thống đang {Action}. Vui lòng đợi...,Action,Thao tác cần thời gian chờ (loading) hoặc tiến trình đang chạy.,Toast - Biểu tượng Loading/Spinner.
+INF-002,INF,COMMON,,Quá trình {Action} đã được đưa vào hàng đợi xử lý ngầm.,Action,"Thực thi các Batch Job, Background task không trả kết quả ngay.",Toast

@@ -1,0 +1,31 @@
+{
+  "_doc": "Định tuyến build skill: một nguồn (.claude/skills) -> nhiều đích (dist/). Thêm một trợ lý AI mới = thêm một mục trong 'targets', KHÔNG chép thêm một bản skill. Xem CLAUDE.md.",
+
+  "source_dir": ".claude/skills",
+  "out_dir": "dist",
+
+  "skills": ["srs-help", "soat-nghiep-vu"],
+
+  "_exclude_doc": "Không đưa vào bản phát: rác Python, và thư mục adapters (là đầu vào của build, không phải nội dung skill).",
+  "exclude_dirs": ["__pycache__", "adapters", ".git", "out"],
+  "exclude_globs": ["*.pyc", "*.pyo", "~$*", "Thumbs.db", ".DS_Store"],
+
+  "targets": {
+    "claude": {
+      "_doc": "Gói .skill (zip) để cài vào Claude / claude.ai.",
+      "package": "zip",
+      "ext": ".skill"
+    },
+    "codex": {
+      "_doc": "Cây thư mục cho Codex; cần thêm agents/openai.yaml khai metadata hiển thị.",
+      "package": "dir",
+      "emit": {
+        "adapters/openai.yaml": "agents/openai.yaml"
+      }
+    },
+    "antigravity": {
+      "_doc": "Cây thư mục cho Antigravity; không cần file metadata riêng.",
+      "package": "dir"
+    }
+  }
+}

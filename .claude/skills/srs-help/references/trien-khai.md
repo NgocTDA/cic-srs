@@ -268,8 +268,9 @@ Bước 3 không bỏ được: bộ eval có phép kiểm đối chiếu **từ
 với style thật có trong file**, và đó là thứ bắt được lỗi đổi tên trước khi nó
 đến tay BA.
 
-Đóng gói lại `.skill` sau khi đổi, và nếu dự án dùng Codex/Antigravity thì
-chạy `sync_from_claude.py` để sinh lại hai bản đó.
+Đóng gói lại sau khi đổi: ở kho nguồn chạy `python tools/build_skills.py` —
+một lệnh sinh lại cả gói `.skill` lẫn bản Codex/Antigravity trong `dist/`.
+Không chép tay sang bản nào.
 
 ---
 
@@ -311,7 +312,7 @@ Hai tài liệu tra cứu khi cần: `references/md-syntax.md` (cú pháp) và
 3. Sinh lại references/outline.json trong skill cho khớp
 4. python scripts/outline_check.py
 5. python evals/run_evals.py --pipeline …     ← không --pipeline phải 327/327 (321/321 nếu thiếu LibreOffice)
-6. Đóng gói .skill mới, phát lại cho team
+6. python tools/build_skills.py   ← sinh lại mọi bản phát, rồi phát cho team
 ```
 
 Bước 5 là bước không được bỏ. Nó bắt được đúng loại lỗi mà mắt không thấy: lệch
