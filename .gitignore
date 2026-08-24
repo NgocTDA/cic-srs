@@ -13,10 +13,25 @@ venv/
 .env.*
 !.env.example
 
-# Sản phẩm render thử
-*.docx.tmp
+# Sản phẩm render — .md mới là bản gốc, .docx/.pdf sinh lại được bất cứ lúc nào.
+# Word là binary: commit vào thì Git không merge nổi, hai BA sửa cùng lúc là hỏng.
+# render.py không có -o thì ghi .docx NGAY CẠNH file .md, nên phải chặn cả
+# trong functions/ chứ không riêng exports/.
+workspace/exports/
+**/functions/**/*.docx
+**/functions/**/*.pdf
 out/
+*.docx.tmp
 ~$*.docx
+~$*.xlsx
+
+# Bản kéo thô từ Confluence — nơi tạm, chưa phải tài liệu. Cái nào thành đặc tả
+# thật thì chuyển vào functions/«phân hệ»/ rồi mới commit.
+confluence_pages/
+
+# NHƯNG ảnh và sơ đồ thì PHẢI commit — không sinh lại được từ .md
+!**/functions/**/assets/**
+!**/functions/**/diagrams/**
 
 # Hệ điều hành
 Thumbs.db
