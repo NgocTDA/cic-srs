@@ -1,0 +1,5 @@
+ma,ten,tac_nhan_lien_quan,pham_vi_mac_dinh,mo_ta,ghi_chu
+ROLE-QTHT,Quản trị hệ thống,,Toàn hệ thống,Quản trị toàn bộ tài khoản,
+ROLE-QTDV,Quản trị đơn vị,,Theo đơn vị,Quản trị tài khoản trong đơn vị của mình,
+ROLE-NVNV,Nhân viên nghiệp vụ,,Theo đơn vị,Chỉ tra cứu,
+ROLE-KTNB,Kiểm toán nội bộ,,Toàn hệ thống,Vai trò có thật trong sổ nhưng không phải cột của Ma trận phân quyền ở FUNC-QLNSD-001 — dùng để kiểm test âm “vai trò không phải cột ma trận”.,

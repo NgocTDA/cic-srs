@@ -1,0 +1,4 @@
+interface:
+  display_name: "SRS Help"
+  short_description: "Soạn, rà soát, kiểm chuẩn và xuất SRS tiếng Việt"
+  default_prompt: "Use $srs-help to write, review, migrate, validate, and export a Vietnamese SRS specification. Apply any project rules supplied with the current workspace or migration bundle after loading the base skill."

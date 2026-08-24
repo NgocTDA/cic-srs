@@ -1,0 +1,12 @@
+ma,loai,doi_tuong,chu_de,noi_dung,thamso,dieu_kien_phat_sinh,ghi_chu
+INF_001,INF,COMMON,,Không tìm thấy dữ liệu phù hợp.,,Truy vấn trả về không bản ghi nào,
+ERR_002,ERR,COMMON,,Hệ thống đang bận. Vui lòng thử lại sau.,,Truy vấn vượt thời gian chờ,
+SUC_001,SUC,COMMON,,Tạo {doi_tuong} thành công.,doi_tuong,Ghi dữ liệu thành công,
+WAR_001,WAR,COMMON,,Đã tạo {doi_tuong} nhưng chưa gửi được thư thông báo.,doi_tuong,Gửi thư thất bại sau khi ghi thành công,
+CONF_001,CONF,COMMON,,Thông tin chưa lưu sẽ bị mất. Bạn có chắc muốn đóng?,,Đóng biểu mẫu còn thay đổi chưa lưu,
+ERR_101,ERR,NGUOIDUNG,,Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.,,Vi phạm quy tắc duy nhất tên đăng nhập,
+ERR_102,ERR,NGUOIDUNG,,"Tên đăng nhập chỉ gồm chữ cái không dấu, chữ số và dấu chấm, dài 6–32 ký tự.",,Vi phạm quy tắc ký tự tên đăng nhập,
+ERR_103,ERR,NGUOIDUNG,,Thư điện tử đã được sử dụng cho tài khoản khác.,,Vi phạm quy tắc duy nhất thư điện tử,
+ERR_104,ERR,NGUOIDUNG,,Vui lòng chọn ít nhất một vai trò.,,Không chọn vai trò nào,
+ERR_105,ERR,NGUOIDUNG,,Bạn chỉ được tạo tài khoản thuộc đơn vị của mình.,,Vi phạm phạm vi dữ liệu theo đơn vị,
+MAIL_001,MAIL,NGUOIDUNG,[{ten_he_thong}] Thông tin tài khoản của bạn,"Kính gửi {ten_nguoi_nhan}, tài khoản của bạn đã được khởi tạo trên hệ thống.","ten_he_thong,ten_nguoi_nhan",Ghi tài khoản thành công,
