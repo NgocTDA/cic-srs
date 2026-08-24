@@ -8,6 +8,8 @@ import argparse
 import urllib3
 import requests
 import markdown
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 
 # Disable insecure request warnings
@@ -30,8 +32,6 @@ def load_env(env_path=None):
             os.path.join(os.getcwd(), '.env'),
             os.path.join(script_dir, '.env'),
             os.path.join(os.path.dirname(script_dir), '.env'),
-            r"C:\Users\ngoct\Downloads\workspace\test\.env",
-            r"C:\Users\ngoct\Downloads\workspace\ba-toolkit\.env"
         ])
     for path in search_paths:
         if os.path.exists(path):
@@ -46,28 +46,69 @@ def load_env(env_path=None):
             return env_vars
     return env_vars
 
+
+def _env_int(env, key, default):
+    try:
+        return int(env.get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_float(env, key, default):
+    try:
+        return float(env.get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
 class ConfluenceClient:
-    def __init__(self, base_url, token, verify_ssl=False):
+    def __init__(self, base_url, token=None, auth_mode='bearer', username=None,
+                 password=None, verify_ssl=True, connect_timeout=5, read_timeout=30,
+                 max_retries=3, backoff_factor=1):
         self.base_url = base_url.rstrip('/')
         self.token = token
+        self.auth_mode = auth_mode
+        self.basic_auth = (username, password) if auth_mode == 'basic' else None
         self.verify = verify_ssl
-        self.headers = {
-            'Authorization': f'Bearer {self.token}',
-            'Content-Type': 'application/json'
-        }
+        self.timeout = (connect_timeout, read_timeout)
+
+        if auth_mode == 'basic':
+            self.headers = {'Content-Type': 'application/json'}
+        else:
+            self.headers = {
+                'Authorization': f'Bearer {self.token}',
+                'Content-Type': 'application/json'
+            }
+
+        # requests không tự retry — mount Retry qua HTTPAdapter. Chỉ các
+        # method mặc định của urllib3 (GET/PUT/DELETE/HEAD/OPTIONS) được
+        # retry tự động; POST (tạo trang, upload ảnh) không retry để tránh
+        # tạo trùng khi request trước đã thành công nhưng response bị mất.
+        retry = Retry(total=max_retries, backoff_factor=backoff_factor,
+                      status_forcelist=(429, 500, 502, 503, 504))
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session = requests.Session()
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
+
+    def _kwargs(self, headers=None):
+        kw = {'headers': headers or self.headers, 'verify': self.verify, 'timeout': self.timeout}
+        if self.basic_auth:
+            kw['auth'] = self.basic_auth
+        return kw
 
     def _get(self, endpoint):
-        res = requests.get(self.base_url + endpoint, headers=self.headers, verify=self.verify)
+        res = self.session.get(self.base_url + endpoint, **self._kwargs())
         res.raise_for_status()
         return res.json()
 
     def _post(self, endpoint, data=None):
-        res = requests.post(self.base_url + endpoint, headers=self.headers, json=data, verify=self.verify)
+        res = self.session.post(self.base_url + endpoint, json=data, **self._kwargs())
         res.raise_for_status()
         return res.json()
-        
+
     def _put(self, endpoint, data=None):
-        res = requests.put(self.base_url + endpoint, headers=self.headers, json=data, verify=self.verify)
+        res = self.session.put(self.base_url + endpoint, json=data, **self._kwargs())
         res.raise_for_status()
         return res.json()
 
@@ -111,21 +152,23 @@ class ConfluenceClient:
         filename = os.path.basename(file_path)
         with open(file_path, 'rb') as f:
             files = {'file': (filename, f, 'application/octet-stream')}
-            headers = {'Authorization': f'Bearer {self.token}', 'X-Atlassian-Token': 'no-check'}
-            
+            headers = {'X-Atlassian-Token': 'no-check'}
+            if self.auth_mode != 'basic':
+                headers['Authorization'] = f'Bearer {self.token}'
+
             if attachment_id: # Update existing
                 url = f"{self.base_url}/rest/api/content/{page_id}/child/attachment/{attachment_id}/data"
             else: # Create new
                 url = f"{self.base_url}/rest/api/content/{page_id}/child/attachment"
-                
-            res = requests.post(url, headers=headers, files=files, verify=self.verify)
+
+            res = self.session.post(url, files=files, **self._kwargs(headers=headers))
             res.raise_for_status()
             return res.json()
 
     def download_attachment_content(self, download_path):
         url = self.base_url + download_path
-        headers = {'Authorization': f'Bearer {self.token}'}
-        res = requests.get(url, headers=headers, verify=self.verify)
+        headers = {} if self.auth_mode == 'basic' else {'Authorization': f'Bearer {self.token}'}
+        res = self.session.get(url, **self._kwargs(headers=headers))
         res.raise_for_status()
         return res.content
 
@@ -164,13 +207,43 @@ def main():
     token = env.get("CONFLUENCE_TOKEN")
     base_url = env.get("CONFLUENCE_URL")
     space_key = args.space or env.get("CONFLUENCE_SPACE", "CIC")
-    
-    if not token or not base_url:
-        print("Error: Missing CONFLUENCE_TOKEN or CONFLUENCE_URL in environment.")
+
+    if not base_url:
+        print("Error: Missing CONFLUENCE_URL in environment.")
+        sys.exit(1)
+
+    auth_mode = env.get("CONFLUENCE_AUTH_MODE", "bearer").strip().lower()
+    username = env.get("CONFLUENCE_USERNAME")
+    password = env.get("CONFLUENCE_PASSWORD")
+    if auth_mode == "basic":
+        if not (username and password):
+            print("Error: CONFLUENCE_AUTH_MODE=basic requires CONFLUENCE_USERNAME "
+                  "and CONFLUENCE_PASSWORD in .env.")
+            sys.exit(1)
+    elif auth_mode == "bearer":
+        if not token:
+            print("Error: Missing CONFLUENCE_TOKEN in environment.")
+            sys.exit(1)
+    else:
+        print(f"Error: Unknown CONFLUENCE_AUTH_MODE '{auth_mode}' (expected 'bearer' or 'basic').")
+        sys.exit(1)
+
+    allow_insecure_http = env.get("CONFLUENCE_ALLOW_INSECURE_HTTP", "false").lower() == "true"
+    if base_url.lower().startswith("http://") and not allow_insecure_http:
+        print("Error: CONFLUENCE_URL dùng http:// nhưng CONFLUENCE_ALLOW_INSECURE_HTTP "
+              "không phải 'true'. Dùng https:// hoặc khai CONFLUENCE_ALLOW_INSECURE_HTTP=true "
+              "nếu đây là mạng nội bộ tin cậy.")
         sys.exit(1)
 
     verify_ssl = env.get("CONFLUENCE_VERIFY_TLS", "true").lower() == "true"
-    client = ConfluenceClient(base_url, token, verify_ssl=verify_ssl)
+    client = ConfluenceClient(
+        base_url, token=token, auth_mode=auth_mode, username=username, password=password,
+        verify_ssl=verify_ssl,
+        connect_timeout=_env_int(env, "CONFLUENCE_CONNECT_TIMEOUT", 5),
+        read_timeout=_env_int(env, "CONFLUENCE_READ_TIMEOUT", 30),
+        max_retries=_env_int(env, "CONFLUENCE_MAX_RETRIES", 3),
+        backoff_factor=_env_float(env, "CONFLUENCE_BACKOFF_FACTOR", 1),
+    )
 
     md_path = os.path.abspath(args.file)
     if not os.path.exists(md_path):

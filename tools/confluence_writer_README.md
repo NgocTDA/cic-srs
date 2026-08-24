@@ -61,4 +61,13 @@ python tools\confluence_writer.py --file Thanh_phan_dung_chung.md --page-id 1212
 *\*Lưu ý: Bắt buộc phải cung cấp một trong hai tham số `--page-id` hoặc `--parent-id`.*
 
 ---
-**Yêu cầu hệ thống:** Đảm bảo file `.env` đã khai báo đúng `CONFLUENCE_TOKEN` và `CONFLUENCE_URL`. Cần cài các package `requests`, `markdown`, `beautifulsoup4` (`pip install requests markdown beautifulsoup4`).
+
+## Biến môi trường (`.env`)
+
+Dùng chung `.env` với `confluence_reader.py` — xem bảng đầy đủ ở
+[`confluence_reader_README.md`](confluence_reader_README.md#biến-môi-trường-env).
+`POST` (tạo trang mới, upload ảnh) **không** tự động retry dù có khai
+`CONFLUENCE_MAX_RETRIES` — tránh tạo trùng nếu request trước đã thành công
+nhưng phản hồi bị mất; chỉ `GET`/`PUT` (đọc, cập nhật trang) mới retry.
+
+**Yêu cầu hệ thống:** Cần cài các package `requests`, `markdown`, `beautifulsoup4` (`pip install requests markdown beautifulsoup4`).

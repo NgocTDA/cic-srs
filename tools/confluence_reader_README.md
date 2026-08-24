@@ -94,4 +94,24 @@ python tools\confluence_reader.py 123456 --save --insecure-tls
 | `--subpage-strategy` | Không | Chiến lược xử lý khi một trang FEAT lại có trang con: `ask` (hỏi, mặc định), `flatten`, `embed`, `abort`. |
 
 ---
-**Yêu cầu hệ thống:** Đảm bảo file `.env` đã khai báo đúng `CONFLUENCE_TOKEN` và `CONFLUENCE_URL` (có thể thêm `CONFLUENCE_FALLBACK_URL` và `CONFLUENCE_SPACE` nếu cần). Cần cài `beautifulsoup4` (`pip install beautifulsoup4`).
+
+## Biến môi trường (`.env`)
+
+Copy `.env.example` ở gốc repo thành `.env` rồi điền. Bắt buộc: `CONFLUENCE_URL`
+và (`CONFLUENCE_TOKEN` nếu `CONFLUENCE_AUTH_MODE=bearer`, mặc định) hoặc
+(`CONFLUENCE_USERNAME` + `CONFLUENCE_PASSWORD` nếu `=basic`).
+
+| Biến | Mặc định | Ghi chú |
+|---|---|---|
+| `CONFLUENCE_AUTH_MODE` | `bearer` | `bearer` hoặc `basic` |
+| `CONFLUENCE_TOKEN` | — | Personal Access Token, dùng khi `bearer` |
+| `CONFLUENCE_USERNAME` / `CONFLUENCE_PASSWORD` | — | Dùng khi `basic` |
+| `CONFLUENCE_URL` | — | Bắt buộc, không còn giá trị mặc định trong code |
+| `CONFLUENCE_FALLBACK_URL` | — | Tuỳ chọn, thử tiếp nếu `CONFLUENCE_URL` lỗi |
+| `CONFLUENCE_SPACE` | — | Tuỳ chọn |
+| `CONFLUENCE_ALLOW_INSECURE_HTTP` | `false` | Phải `true` nếu `CONFLUENCE_URL` là `http://` (không phải `https://`), coi như xác nhận mạng nội bộ tin cậy |
+| `CONFLUENCE_VERIFY_TLS` | `true` | Đặt `false` nếu server dùng self-signed cert (`https`) |
+| `CONFLUENCE_CONNECT_TIMEOUT` / `CONFLUENCE_READ_TIMEOUT` | `5` / `30` | Giây |
+| `CONFLUENCE_MAX_RETRIES` / `CONFLUENCE_BACKOFF_FACTOR` | `3` / `1` | Retry khi lỗi mạng hoặc HTTP 429/5xx, cách nhau `backoff_factor * 2^lần thử` |
+
+**Yêu cầu hệ thống:** Cần cài `beautifulsoup4` (`pip install beautifulsoup4`).
