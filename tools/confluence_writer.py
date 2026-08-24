@@ -11,6 +11,13 @@ import markdown
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
+from PIL import Image
+
+# Kích thước hiển thị tối đa khi chèn ảnh vào Confluence (ac:width, px) — chỉ
+# là trần, không phóng to ảnh nhỏ hơn. Ảnh đứng độc lập rộng hơn bảng vì
+# không bị ràng buộc bởi cột.
+STANDALONE_IMAGE_MAX_WIDTH = 1200
+TABLE_IMAGE_MAX_WIDTH = 600
 
 # Disable insecure request warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -179,6 +186,85 @@ def calculate_file_md5(file_path):
     with open(file_path, 'rb') as f:
         return calculate_md5(f.read())
 
+def _get_image_width(path):
+    """Chiều rộng gốc (px) của file ảnh, None nếu không đọc được."""
+    try:
+        with Image.open(path) as im:
+            return im.size[0]
+    except Exception:
+        return None
+
+
+def _parse_css_width_px(value):
+    """'120px' -> 120, '120' -> 120, '50%' hoặc rỗng -> None (không quy đổi
+    được sang px tuyệt đối)."""
+    if not value:
+        return None
+    value = value.strip()
+    m = re.match(r'^(\d+(?:\.\d+)?)\s*px$', value, re.IGNORECASE)
+    if m:
+        return int(float(m.group(1)))
+    if re.match(r'^\d+(?:\.\d+)?$', value):
+        return int(float(value))
+    return None
+
+
+def _extract_width_attr(tag):
+    """Đọc width khai trên chính tag (style="width:...px" hoặc width="...")."""
+    if tag is None:
+        return None
+    style = tag.get('style', '')
+    m = re.search(r'width\s*:\s*([^;]+)', style, re.IGNORECASE)
+    if m:
+        px = _parse_css_width_px(m.group(1))
+        if px:
+            return px
+    return _parse_css_width_px(tag.get('width'))
+
+
+def _find_column_width_px(img_tag):
+    """Độ rộng cột (px) chứa ảnh, nếu bảng khai rõ — qua width/style trên
+    chính ô <td>/<th>, hoặc <colgroup><col> cùng vị trí cột. Markdown thường
+    (không chèn HTML thô) không khai width nào cả -> trả None, gọi nơi dùng
+    tự rơi về mức trần mặc định. Không xử lý colspan (hiếm gặp, bỏ qua)."""
+    cell = img_tag.find_parent(['td', 'th'])
+    if cell is None:
+        return None
+
+    px = _extract_width_attr(cell)
+    if px:
+        return px
+
+    table = cell.find_parent('table')
+    row = cell.find_parent('tr')
+    if table is None or row is None:
+        return None
+
+    cells = row.find_all(['td', 'th'], recursive=False)
+    try:
+        col_index = cells.index(cell)
+    except ValueError:
+        return None
+
+    cols = table.find_all('col')
+    if col_index < len(cols):
+        return _extract_width_attr(cols[col_index])
+    return None
+
+
+def compute_display_width(local_path, in_table, column_width_px):
+    """Kích thước ac:width cuối cùng: trần theo vị trí (bảng/độc lập), ưu
+    tiên độ rộng cột nếu bảng khai rõ, không bao giờ phóng to ảnh gốc."""
+    actual_width = _get_image_width(local_path)
+    if actual_width is None:
+        return None
+    if in_table:
+        cap = min(column_width_px, TABLE_IMAGE_MAX_WIDTH) if column_width_px else TABLE_IMAGE_MAX_WIDTH
+    else:
+        cap = STANDALONE_IMAGE_MAX_WIDTH
+    return min(actual_width, cap)
+
+
 def extract_image_paths(md_content):
     # Match markdown images: ![alt](path)
     md_img_pattern = r'!\[.*?\]\((.*?)\)'
@@ -331,9 +417,21 @@ def main():
         src = img.get('src', '')
         if src.startswith('http'):
             continue
-        
+
         filename = os.path.basename(src)
-        ac_image = soup.new_tag('ac:image')
+        local_path = os.path.join(md_dir, src)
+
+        ac_attrs = {}
+        if os.path.exists(local_path):
+            in_table = img.find_parent('table') is not None
+            column_width_px = _find_column_width_px(img) if in_table else None
+            width = compute_display_width(local_path, in_table, column_width_px)
+            if width:
+                ac_attrs['ac:width'] = str(width)
+        else:
+            print(f"Warning: Local image not found for sizing: {local_path}")
+
+        ac_image = soup.new_tag('ac:image', **ac_attrs)
         ri_attachment = soup.new_tag('ri:attachment', **{'ri:filename': filename})
         ac_image.append(ri_attachment)
         img.replace_with(ac_image)

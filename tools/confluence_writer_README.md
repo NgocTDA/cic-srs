@@ -17,6 +17,15 @@
    - Tự động bọc ảnh bằng Macro `<ac:image>` chuẩn của Confluence.
    - Nếu trong Markdown đã có sẵn thẻ XML/XHTML, tool sẽ không làm hỏng cấu trúc đó.
 
+4. **Tự chuẩn hoá kích thước hiển thị ảnh** (chống ảnh to nhỏ lộn xộn do
+   ảnh gốc — chụp màn hình — độ phân giải khác nhau mỗi lần):
+   - Ảnh đứng độc lập: rộng tối đa **1200px**.
+   - Ảnh trong bảng: nếu bảng khai rõ độ rộng cột (`style="width:...px"` trên
+     `<td>`/`<th>` hoặc `<colgroup><col>`) thì lấy `min(độ rộng cột, 600px)`;
+     bảng markdown thường không khai gì thì lấy thẳng **600px**.
+   - Chỉ là **trần** — ảnh vốn nhỏ hơn mức trần giữ nguyên, không phóng to.
+   - Không có tác dụng với ảnh remote (`http://`/`https://` — tool không tải về đo).
+
 ---
 
 ## 💻 Hướng dẫn Chạy lệnh (Copy & Paste)
@@ -70,4 +79,4 @@ Dùng chung `.env` với `confluence_reader.py` — xem bảng đầy đủ ở
 `CONFLUENCE_MAX_RETRIES` — tránh tạo trùng nếu request trước đã thành công
 nhưng phản hồi bị mất; chỉ `GET`/`PUT` (đọc, cập nhật trang) mới retry.
 
-**Yêu cầu hệ thống:** Cần cài các package `requests`, `markdown`, `beautifulsoup4` (`pip install requests markdown beautifulsoup4`).
+**Yêu cầu hệ thống:** Cần cài các package `requests`, `markdown`, `beautifulsoup4`, `Pillow` (`pip install requests markdown beautifulsoup4 Pillow`) — `Pillow` dùng để đọc kích thước gốc ảnh, phục vụ chuẩn hoá `ac:width` ở trên.
