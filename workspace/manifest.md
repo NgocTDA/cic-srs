@@ -1,4 +1,4 @@
-# Manifest — danh mục chức năng của dự án «Tên dự án»
+# Manifest — danh mục chức năng của dự án CIC_CORE
 
 Đây là **sổ cấp phát mã `FUNC-`**, không phải bản kiểm kê. Kiểm kê thì dựng lại
 được từ đĩa bất cứ lúc nào. Cấp phát thì không: mã phải giữ chỗ **trước khi**

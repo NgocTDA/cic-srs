@@ -10,6 +10,9 @@ import sys
 import re
 import json
 import ssl
+import time
+import base64
+import contextlib
 import argparse
 import urllib.request
 import urllib.error
@@ -53,6 +56,20 @@ def load_env(env_path=None):
                             env_vars[k] = v
             break
     return env_vars
+
+
+def _env_int(env, key, default):
+    try:
+        return int(env.get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_float(env, key, default):
+    try:
+        return float(env.get(key, default))
+    except (TypeError, ValueError):
+        return default
 
 
 def convert_node(node, in_table_cell=False):
@@ -239,12 +256,20 @@ def convert_node(node, in_table_cell=False):
 class ConfluenceReader:
     def __init__(self, base_url=None, token=None, insecure_http=True, verify_tls=True):
         env = load_env()
-        self.base_url = (base_url or env.get('CONFLUENCE_URL', 'http://10.16.16.242:8090/')).rstrip('/')
-        self.fallback_url = env.get('CONFLUENCE_FALLBACK_URL', 'https://cic.ntda.io.vn').rstrip('/')
+        self.base_url = (base_url or env.get('CONFLUENCE_URL', '')).rstrip('/')
+        self.fallback_url = env.get('CONFLUENCE_FALLBACK_URL', '').rstrip('/')
+        self.auth_mode = env.get('CONFLUENCE_AUTH_MODE', 'bearer').strip().lower()
         self.token = token or env.get('CONFLUENCE_TOKEN', '')
-        self.space_key = env.get('CONFLUENCE_SPACE', 'CIC')
+        self.username = env.get('CONFLUENCE_USERNAME', '')
+        self.password = env.get('CONFLUENCE_PASSWORD', '')
+        self.space_key = env.get('CONFLUENCE_SPACE', '')
         self.insecure_http = insecure_http
         self.verify_tls = verify_tls
+
+        self.connect_timeout = _env_int(env, 'CONFLUENCE_CONNECT_TIMEOUT', 5)
+        self.read_timeout = _env_int(env, 'CONFLUENCE_READ_TIMEOUT', 30)
+        self.max_retries = _env_int(env, 'CONFLUENCE_MAX_RETRIES', 3)
+        self.backoff_factor = _env_float(env, 'CONFLUENCE_BACKOFF_FACTOR', 1)
 
         self.ctx = ssl.create_default_context()
         if not self.verify_tls:
@@ -256,9 +281,32 @@ class ConfluenceReader:
             'Accept': 'application/json',
             'User-Agent': 'Antigravity-Confluence-Reader/1.0'
         }
-        if self.token:
+        if self.auth_mode == 'basic':
+            if self.username and self.password:
+                cred = base64.b64encode(
+                    f"{self.username}:{self.password}".encode('utf-8')).decode('ascii')
+                headers['Authorization'] = f'Basic {cred}'
+        elif self.token:
             headers['Authorization'] = f'Bearer {self.token}'
         return headers
+
+    def _urlopen_with_retry(self, req, timeout):
+        """urllib không có adapter retry sẵn như requests — tự lặp lại với
+        backoff luỹ thừa, chỉ retry lỗi mạng/timeout và HTTP 429/5xx."""
+        last_err = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                return urllib.request.urlopen(req, timeout=timeout, context=self.ctx)
+            except urllib.error.HTTPError as e:
+                last_err = e
+                if e.code not in (429, 500, 502, 503, 504) or attempt == self.max_retries:
+                    raise
+            except (urllib.error.URLError, OSError) as e:
+                last_err = e
+                if attempt == self.max_retries:
+                    raise
+            time.sleep(self.backoff_factor * (2 ** attempt))
+        raise last_err
 
     def _call_api(self, endpoint):
         urls_to_try = [f"{self.base_url}{endpoint}"]
@@ -269,7 +317,8 @@ class ConfluenceReader:
         for u in urls_to_try:
             try:
                 req = urllib.request.Request(u, headers=self._get_headers())
-                with urllib.request.urlopen(req, timeout=10, context=self.ctx) as resp:
+                with contextlib.closing(
+                        self._urlopen_with_retry(req, self.read_timeout)) as resp:
                     return json.loads(resp.read().decode('utf-8'))
             except Exception as e:
                 last_err = e
@@ -348,7 +397,8 @@ class ConfluenceReader:
         
         try:
             req = urllib.request.Request(url, headers=self._get_headers())
-            with urllib.request.urlopen(req, timeout=30, context=self.ctx) as resp:
+            with contextlib.closing(
+                    self._urlopen_with_retry(req, self.read_timeout)) as resp:
                 with open(out_path, 'wb') as f:
                     f.write(resp.read())
             return title
@@ -374,7 +424,37 @@ def main():
 
     args = parser.parse_args()
 
-    reader = ConfluenceReader(base_url=args.url, token=args.token, verify_tls=not args.insecure_tls)
+    env = load_env()
+    effective_url = args.url or env.get('CONFLUENCE_URL', '')
+    if not effective_url:
+        print("Error: Missing CONFLUENCE_URL in environment (.env) or --url.")
+        sys.exit(1)
+
+    auth_mode = env.get('CONFLUENCE_AUTH_MODE', 'bearer').strip().lower()
+    if auth_mode == 'basic':
+        if not (env.get('CONFLUENCE_USERNAME') and env.get('CONFLUENCE_PASSWORD')):
+            print("Error: CONFLUENCE_AUTH_MODE=basic requires CONFLUENCE_USERNAME "
+                  "and CONFLUENCE_PASSWORD in .env.")
+            sys.exit(1)
+    elif auth_mode == 'bearer':
+        if not (args.token or env.get('CONFLUENCE_TOKEN')):
+            print("Error: Missing CONFLUENCE_TOKEN in environment (.env) or --token.")
+            sys.exit(1)
+    else:
+        print(f"Error: Unknown CONFLUENCE_AUTH_MODE '{auth_mode}' (expected 'bearer' or 'basic').")
+        sys.exit(1)
+
+    allow_insecure_http = env.get('CONFLUENCE_ALLOW_INSECURE_HTTP', 'false').lower() == 'true'
+    if effective_url.lower().startswith('http://') and not allow_insecure_http:
+        print("Error: CONFLUENCE_URL dùng http:// nhưng CONFLUENCE_ALLOW_INSECURE_HTTP "
+              "không phải 'true'. Dùng https:// hoặc khai CONFLUENCE_ALLOW_INSECURE_HTTP=true "
+              "nếu đây là mạng nội bộ tin cậy.")
+        sys.exit(1)
+
+    env_verify_tls = env.get('CONFLUENCE_VERIFY_TLS', 'true').strip().lower() != 'false'
+
+    reader = ConfluenceReader(base_url=args.url, token=args.token,
+                              verify_tls=env_verify_tls and not args.insecure_tls)
     try:
         print(f"[*] Đang tải dữ liệu Confluence cho: {args.page}...")
         page_info = reader.get_page(args.page)
